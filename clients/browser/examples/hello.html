@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>@eventwatch/browser — hello world</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 720px; }
+    button { margin: 4px; padding: 6px 12px; }
+    pre { background: #f3f3f3; padding: 8px; border-radius: 4px; }
+    .row { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <h1>event_watch — browser client demo</h1>
+  <p>
+    Serves the library from <code>../src/</code> (relative). Point your
+    browser at this file via a local HTTP server (e.g.
+    <code>python3 -m http.server 3000</code> in the <code>clients/browser</code>
+    directory, then open <a href="http://localhost:3000/examples/hello.html">
+    http://localhost:3000/examples/hello.html</a>).
+  </p>
+
+  <div class="row">
+    Server URL <input id="url" value="ws://localhost:8080/ws" size="40" />
+    <button id="connect">Connect</button>
+    <span id="status">disconnected</span>
+  </div>
+
+  <div class="row">
+    Topic <input id="topic" value="int/browser-demo" size="30" />
+    <button id="set100">Set 100</button>
+    <button id="incr">+1</button>
+    <button id="incr5">+5</button>
+    <button id="decr">-1</button>
+    <button id="get">Get</button>
+  </div>
+
+  <h3>Current value (live)</h3>
+  <pre id="value">—</pre>
+
+  <h3>Event feed</h3>
+  <pre id="feed"></pre>
+
+<script type="module">
+  import { Client } from '../src/index.js';
+
+  const $ = (id) => document.getElementById(id);
+  let client = null;
+  let handle = null;
+
+  $('connect').onclick = async () => {
+    const url = $('url').value.trim();
+    $('status').textContent = 'connecting…';
+    try {
+      client = await Client.dial(url);
+      $('status').textContent = 'connected';
+      subscribeCurrentTopic();
+    } catch (err) {
+      $('status').textContent = 'error: ' + err.message;
+    }
+  };
+
+  function subscribeCurrentTopic() {
+    if (handle) handle.close();
+    const topic = $('topic').value.trim();
+    if (!topic || !client) return;
+    handle = client.subscribe(topic, (ev) => {
+      const line = `[${ev.type}] seq=${ev.seq} state=${JSON.stringify(ev.state)}`;
+      $('feed').textContent = line + '\n' + $('feed').textContent;
+      if (ev.state?.value !== undefined) $('value').textContent = String(ev.state.value);
+    });
+  }
+  $('topic').addEventListener('change', subscribeCurrentTopic);
+
+  const withField = (fn) => async () => {
+    if (!client) return alert('connect first');
+    const topic = $('topic').value.trim();
+    if (!topic.startsWith('int/')) return alert('topic must start with int/');
+    try { await fn(client.intField(topic)); } catch (e) { alert(e.message); }
+  };
+
+  $('set100').onclick = withField((f) => f.set(100));
+  $('incr'  ).onclick = withField((f) => f.incr(1));
+  $('incr5' ).onclick = withField((f) => f.incr(5));
+  $('decr'  ).onclick = withField((f) => f.decr(1));
+  $('get'   ).onclick = async () => {
+    if (!client) return alert('connect first');
+    const [v, exists] = await client.intField($('topic').value.trim()).get();
+    $('value').textContent = exists ? String(v) : '(not set)';
+  };
+</script>
+</body>
+</html>

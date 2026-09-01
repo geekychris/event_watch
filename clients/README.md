@@ -1,7 +1,7 @@
 # event_watch client libraries
 
 Client libraries for the event_watch pub/sub server. Same wire protocol
-(single WebSocket, JSON frames), five different language / platform bindings.
+(single WebSocket, JSON frames), seven different language / platform bindings.
 
 | Client | Location | Tests | Full parity? |
 |---|---|---|---|
@@ -9,6 +9,7 @@ Client libraries for the event_watch pub/sub server. Same wire protocol
 | **Python** | `python/` | 4 pytest, `pytest -q` | ✅ everything |
 | **Java** | `java/` (Maven, JDK 11+) | 3 JUnit, `mvn test` | ✅ everything |
 | **Rust** | `rust/` (Cargo) | 3 tokio, `cargo test` | ✅ everything |
+| **Browser (JS)** | `browser/` (`@eventwatch/browser`, ESM) | 7 node --test | ✅ everything |
 | **ESP-IDF** | `esp-idf/eventwatch/` | example sketch | 🔸 no request/response, no refcount |
 | **Arduino** | `arduino/eventwatch/` | example sketches | 🔸 no request/response, no refcount |
 

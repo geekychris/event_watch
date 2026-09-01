@@ -1,0 +1,30 @@
+{
+  "name": "@eventwatch/browser",
+  "version": "0.1.0",
+  "description": "Browser (and Node 22+) client for the event_watch pub/sub service",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
+    }
+  },
+  "files": [
+    "src/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test 'test/**/*.test.js'"
+  },
+  "keywords": [
+    "eventwatch",
+    "pubsub",
+    "websocket"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  }
+}

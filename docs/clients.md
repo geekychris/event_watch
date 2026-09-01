@@ -1,4 +1,4 @@
-# Client usage — six languages
+# Client usage — seven languages / platforms
 
 Every client speaks the same [wire protocol](wire-protocol.md). Same
 concepts: connect → subscribe/publish/get_state → typed field helpers.
@@ -24,14 +24,14 @@ sequenceDiagram
 
 ## Feature parity table
 
-| Feature | Go | Python | Java | Rust | ESP-IDF | Arduino |
-|---|---|---|---|---|---|---|
-| Subscribe + live events | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Refcounted local dispatch | ✅ | ✅ | ✅ | ✅ | ❌ (1 cb per client) | ❌ (1 cb per client) |
-| Publish request/response | ✅ | ✅ | ✅ | ✅ | ❌ (fire-and-forget) | ❌ |
-| GetState via WS | ✅ | ✅ | ✅ | ✅ | ❌ (use `state` on subscribe) | ❌ |
-| Auto-reconnect + resume seq | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Typed field helpers | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Feature | Go | Python | Java | Rust | Browser (JS) | ESP-IDF | Arduino |
+|---|---|---|---|---|---|---|---|
+| Subscribe + live events | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Refcounted local dispatch | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (1 cb per client) | ❌ (1 cb per client) |
+| Publish request/response | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (fire-and-forget) | ❌ |
+| GetState via WS | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (use `state` on subscribe) | ❌ |
+| Auto-reconnect + resume seq | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Typed field helpers | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ---
 
@@ -234,6 +234,65 @@ mvn test
 ```
 
 ---
+
+## Browser (JavaScript / TypeScript)
+
+**Location:** `clients/browser/` (`@eventwatch/browser`). ESM. Uses the
+native `WebSocket` — zero runtime deps. Works in browsers and in Node 22+
+(both have `WebSocket` globally).
+
+### Install
+
+```bash
+npm install file:./clients/browser
+# or from a published registry:  npm install @eventwatch/browser
+```
+
+Or drop it in a static HTML page with no build tool:
+
+```html
+<script type="module">
+  import { Client } from '/path/to/eventwatch/src/index.js';
+</script>
+```
+
+### Hello world
+
+```js
+import { Client } from '@eventwatch/browser';
+
+const c = await Client.dial('ws://localhost:8080/ws');
+
+const h = c.subscribe('int/counter', (ev) => {
+  console.log(ev.type, 'seq', ev.seq, 'value now', ev.state?.value);
+});
+
+const counter = c.intField('int/counter');
+await counter.set(100);
+await counter.incr(5);         // → 105
+await counter.decr(3);         // → 102
+const [value, exists] = await counter.get();
+console.log(value, exists);
+
+h.close();
+c.close();
+```
+
+### With auth
+
+```js
+const c = await Client.dial('ws://localhost:8080/ws', { token: 's3cr3t' });
+// Sent as ?access_token=… on the URL — browsers can't set headers on WebSocket.
+```
+
+### Test
+
+```bash
+cd clients/browser
+node --test test/client.test.js
+```
+
+TypeScript types ship at `src/index.d.ts` — no build step, no `.ts` source.
 
 ## Rust
 
