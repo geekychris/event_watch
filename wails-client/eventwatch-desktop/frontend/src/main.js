@@ -95,6 +95,30 @@ document.querySelector('#app').innerHTML = `
     <ul id="topics-list"></ul>
   </section>
 
+  <section class="card">
+    <h2>Widget 1 — Entity list (deep integration)</h2>
+    <p class="hint">Add a topic; the row subscribes and shows the current reduced state, auto-updating on every event. Same pattern as the React app's EntityListWidget.</p>
+    <label>Topic <input id="entity-topic" value="pr/octo/hello/1" placeholder="pr/octo/hello/1" autocapitalize="off" autocorrect="off" spellcheck="false" /></label>
+    <div class="row"><button id="btn-entity-add">Add to list</button> <span id="entity-count" class="hint">0 tracked</span></div>
+    <table class="entity-table" id="entity-table">
+      <thead>
+        <tr><th>Topic</th><th>Title / author</th><th>State</th><th>Signals</th><th>Updated</th><th></th></tr>
+      </thead>
+      <tbody id="entity-tbody"></tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Widget 2 — Notification (change-data-capture)</h2>
+    <p class="hint">"Just tell me when something happens" — ignores payload/state, counts occurrences, flashes on arrival. Publish anything to the topic below to see it pulse.</p>
+    <label>Watch topic <input id="notif-topic" value="chat/notifications" placeholder="chat/notifications" autocapitalize="off" autocorrect="off" spellcheck="false" /></label>
+    <div id="notif-box" class="notif-box">
+      <div id="notif-count" class="notif-count">0</div>
+      <div class="notif-label">notifications received</div>
+      <div id="notif-meta" class="hint" style="margin-top: 6px;">waiting…</div>
+    </div>
+  </section>
+
 </main>
 `;
 
@@ -406,3 +430,130 @@ async function refreshTopics() {
 
 setInterval(refreshMetrics, 2000);
 setInterval(refreshTopics, 5000);
+
+// -- widget 1: entity list (deep integration) --
+// One row per topic; each row subscribes independently and renders the
+// current reduced state, updating as events arrive.
+const entityRows = new Map(); // topic -> { tr, unsub }
+
+function renderEntityCells(tr, s) {
+  const cells = tr.querySelectorAll('td');
+  const title = s.title
+    ? `<b>${escapeHtml(s.title)}</b><br /><span class="hint">by ${escapeHtml(s.author || '—')}</span>`
+    : '<span class="hint">(no title yet)</span>';
+  cells[1].innerHTML = title;
+  cells[2].innerHTML = `<span class="badge state-${s.state || 'unknown'}">${s.state || '—'}</span>`;
+  const checks = s.checks || {};
+  const checksTxt = ((checks.passed || 0) + (checks.failed || 0) + (checks.pending || 0)) > 0
+    ? ` · <span style="color:#7fd">${checks.passed || 0} ok</span> / <span style="color:#f6a">${checks.failed || 0} fail</span> / ${checks.pending || 0} pending`
+    : '';
+  cells[3].innerHTML = `✓ ${s.approvals || 0}` +
+    (s.reviewers?.length ? ` · 👀 ${s.reviewers.length}` : '') +
+    (s.comments ? ` · 💬 ${s.comments}` : '') + checksTxt;
+  cells[4].textContent = s.updated_at ? relativeTime(s.updated_at) : '—';
+}
+
+function relativeTime(iso) {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (Number.isNaN(ms)) return iso;
+  if (ms < 1000) return 'just now';
+  if (ms < 60_000) return Math.floor(ms / 1000) + 's ago';
+  if (ms < 3_600_000) return Math.floor(ms / 60_000) + 'm ago';
+  return Math.floor(ms / 3_600_000) + 'h ago';
+}
+
+async function addEntity() {
+  const topic = $('entity-topic').value.trim();
+  if (!topic) return alert('type a topic');
+  if (!connected) return alert('connect first');
+  if (entityRows.has(topic)) return alert('already in the list');
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><code>${escapeHtml(topic)}</code></td>
+    <td><span class="hint">(loading…)</span></td>
+    <td><span class="badge state-unknown">—</span></td>
+    <td class="hint">—</td>
+    <td class="hint">—</td>
+    <td><button>×</button></td>`;
+  tr.querySelector('button').onclick = () => removeEntity(topic);
+  $('entity-tbody').appendChild(tr);
+
+  // Seed with GetState so the row is populated even if no event fires yet.
+  try {
+    const raw = await GetState(topic);
+    if (raw) renderEntityCells(tr, JSON.parse(raw));
+  } catch (_) {}
+
+  // Live updates via subscribe. If already subscribed elsewhere, the Wails
+  // App.Subscribe will reject — but our listener will still fire because
+  // the wails runtime event system is topic-broadcast, not per-caller.
+  const unsub = EventsOn('event:' + topic, (e) => {
+    if (e && e.state) renderEntityCells(tr, e.state);
+  });
+  try { await Subscribe(topic, 'latest'); } catch (_) { /* dup ok */ }
+
+  entityRows.set(topic, { tr, unsub });
+  updateEntityCount();
+}
+
+async function removeEntity(topic) {
+  const rec = entityRows.get(topic);
+  if (!rec) return;
+  rec.unsub();
+  try { await Unsubscribe(topic); } catch (_) {}
+  rec.tr.remove();
+  entityRows.delete(topic);
+  updateEntityCount();
+}
+
+function updateEntityCount() {
+  $('entity-count').textContent = entityRows.size + ' tracked';
+}
+
+$('btn-entity-add').onclick = addEntity;
+
+// -- widget 2: notification (CDC) --
+// Ignore payload/state — just count events on the watched topic and flash
+// on each arrival. Perfect for cache-invalidation / refresh triggers.
+let notifCount = 0;
+let notifLastAt = null;
+let notifLastType = '';
+let notifSubTopic = null;
+let notifUnsub = null;
+
+async function rebindNotifSub() {
+  const topic = $('notif-topic').value.trim();
+  if (topic === notifSubTopic) return;
+  if (notifUnsub) { notifUnsub(); notifUnsub = null; }
+  if (notifSubTopic) {
+    try { await Unsubscribe(notifSubTopic); } catch (_) {}
+    notifSubTopic = null;
+  }
+  if (!topic || !connected) return;
+  notifUnsub = EventsOn('event:' + topic, (e) => {
+    notifCount++;
+    notifLastAt = Date.now();
+    notifLastType = e?.type || '';
+    $('notif-count').textContent = String(notifCount);
+    $('notif-box').classList.add('flash');
+    setTimeout(() => $('notif-box').classList.remove('flash'), 500);
+    updateNotifMeta();
+  });
+  try { await Subscribe(topic, 'latest'); } catch (_) { /* dup ok */ }
+  notifSubTopic = topic;
+  updateNotifMeta();
+}
+
+function updateNotifMeta() {
+  if (notifLastAt === null) { $('notif-meta').textContent = 'watching…'; return; }
+  const ms = Date.now() - notifLastAt;
+  const ago = ms < 1000 ? 'just now'
+    : ms < 60_000 ? Math.floor(ms / 1000) + 's ago'
+    : Math.floor(ms / 60_000) + 'm ago';
+  $('notif-meta').innerHTML = `Last: <code>${escapeHtml(notifLastType)}</code> · ${ago}`;
+}
+
+$('notif-topic').addEventListener('change', rebindNotifSub);
+setInterval(updateNotifMeta, 1000);
+// Also rebind on connect (the initial value should attach if we're already connected on load).
+setInterval(() => { if (connected && notifSubTopic === null) rebindNotifSub(); }, 1500);

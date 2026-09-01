@@ -69,3 +69,29 @@ td:first-child { color: var(--muted); }
 td:last-child { text-align: right; font-family: ui-monospace, monospace; }
 ul { margin: 4px 0; padding-left: 16px; font-size: 11px; max-height: 120px; overflow: auto; }
 code { font-family: ui-monospace, monospace; }
+
+/* State badge extensions */
+.badge.state-open    { background: #2b3f6b; color: #cde1ff; }
+.badge.state-merged  { background: #2b6b4a; color: #ccffe3; }
+.badge.state-closed  { background: #4a2b3f; color: #ffcdd8; }
+.badge.state-unknown { background: #2b303c; color: #b0b6c8; }
+
+/* Widget 1 — entity table */
+table.entity-table { margin-top: 6px; }
+table.entity-table th, table.entity-table td {
+  padding: 5px 6px; text-align: left; border-bottom: 1px solid #1a1e28;
+  vertical-align: top; font-family: system-ui, sans-serif; color: var(--text);
+}
+table.entity-table th { color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; }
+table.entity-table td:first-child { color: var(--text); }
+table.entity-table td:last-child { text-align: right; }
+
+/* Widget 2 — notification box */
+.notif-box {
+  margin-top: 10px; padding: 24px; text-align: center; border-radius: 6px;
+  background: #10151d; border: 2px solid var(--border);
+  transition: background 300ms, border-color 300ms;
+}
+.notif-box.flash { background: #274b8f; border-color: #6ab0ff; }
+.notif-count { font-size: 34px; font-weight: 700; font-family: ui-monospace, monospace; }
+.notif-label { color: var(--muted); font-size: 11px; margin-top: 4px; }

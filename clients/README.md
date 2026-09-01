@@ -10,6 +10,7 @@ Client libraries for the event_watch pub/sub server. Same wire protocol
 | **Java** | `java/` (Maven, JDK 11+) | 3 JUnit, `mvn test` | ✅ everything |
 | **Rust** | `rust/` (Cargo) | 3 tokio, `cargo test` | ✅ everything |
 | **Browser (JS)** | `browser/` (`@eventwatch/browser`, ESM) | 7 node --test | ✅ everything |
+| **React + TS demo** | `react/` (Vite; imports `@eventwatch/browser`) | manual (two widgets) | ✅ everything |
 | **ESP-IDF** | `esp-idf/eventwatch/` | example sketch | 🔸 no request/response, no refcount |
 | **Arduino** | `arduino/eventwatch/` | example sketches | 🔸 no request/response, no refcount |
 

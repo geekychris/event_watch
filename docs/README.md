@@ -19,9 +19,10 @@ that thing so every observer sees a consistent view.**
 3. **[wire-protocol.md](wire-protocol.md)** — WS frames + HTTP endpoints (the ground truth for building a client)
 4. **[object-types.md](object-types.md)** — the 8 built-in object types with lifecycle diagrams
 5. **[build.md](build.md)** — install / run / test / configure
-6. **[clients.md](clients.md)** — usage guides for Go, Python, Java, Rust, ESP-IDF, Arduino
-7. **[kubernetes.md](kubernetes.md)** — container image + Kustomize manifests (server + Redis + ingress + Prometheus)
-8. **[extending.md](extending.md)** — add your own reducer or webhook plugin
+6. **[clients.md](clients.md)** — usage guides for Go, Python, Java, Rust, browser JS, ESP-IDF, Arduino
+7. **[react-app.md](react-app.md)** — React + TypeScript demo app; deep vs shallow (CDC) UI integration patterns
+8. **[kubernetes.md](kubernetes.md)** — container image + Kustomize manifests (server + Redis + ingress + Prometheus)
+9. **[extending.md](extending.md)** — add your own reducer or webhook plugin
 
 ## What is it, really?
 
