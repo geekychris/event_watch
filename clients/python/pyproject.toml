@@ -1,0 +1,21 @@
+[project]
+name = "eventwatch"
+version = "0.1.0"
+description = "Python client for the event_watch pub/sub service"
+requires-python = ">=3.10"
+dependencies = [
+  "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0", "pytest-asyncio>=0.21"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["eventwatch*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

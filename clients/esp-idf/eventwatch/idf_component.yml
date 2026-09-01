@@ -1,0 +1,4 @@
+description: event_watch client for ESP-IDF (publish/subscribe + int/str field helpers)
+version: "0.1.0"
+dependencies:
+  espressif/esp_websocket_client: "^1.2.0"

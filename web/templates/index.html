@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>event_watch</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<header>
+  <h1>event_watch</h1>
+  <div id="conn-status" class="pill offline">disconnected</div>
+</header>
+
+<main class="grid">
+
+  <section class="card">
+    <h2>1. Connect</h2>
+    <label>Server URL <input id="ws-url" value="ws://localhost:8080/ws" /></label>
+    <label>Auth token (optional) <input id="ws-token" placeholder="leave blank when --auth is off" /></label>
+    <div class="row">
+      <button id="btn-connect">Connect</button>
+      <button id="btn-disconnect" disabled>Disconnect</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Subscribe</h2>
+    <label>Topic <input id="sub-topic" placeholder="pr/octo/hello/1" /></label>
+    <label>From
+      <select id="sub-from">
+        <option value="latest">latest (new only)</option>
+        <option value="last:10">last 10</option>
+        <option value="last:50">last 50</option>
+        <option value="seq:1">from seq 1</option>
+      </select>
+    </label>
+    <div class="row">
+      <button id="btn-subscribe">Subscribe</button>
+      <button id="btn-unsubscribe">Unsubscribe</button>
+    </div>
+    <h3>Live events</h3>
+    <div id="event-feed" class="feed"></div>
+  </section>
+
+  <section class="card">
+    <h2>3. Publish / simulate</h2>
+    <h3>Free-form publish</h3>
+    <label>Topic <input id="pub-topic" placeholder="chat/general" /></label>
+    <label>Event type <input id="pub-type" placeholder="msg_posted" /></label>
+    <label>Payload JSON <textarea id="pub-payload" rows="4">{"user":"alice","text":"hi"}</textarea></label>
+    <div class="row"><button id="btn-publish">Publish</button></div>
+
+    <h3>Scripted simulations</h3>
+    <p class="hint">Each button drives a full lifecycle on a default topic.</p>
+    <div class="row wrap">
+      <button data-sim="pr">PR</button>
+      <button data-sim="build">Build</button>
+      <button data-sim="deploy">Deploy</button>
+      <button data-sim="job">Job</button>
+      <button data-sim="chat">Chat</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>4. State + metrics</h2>
+    <label>Topic <input id="state-topic" placeholder="pr/octo/hello/1" /></label>
+    <div class="row">
+      <button id="btn-get-state">Get state</button>
+    </div>
+    <pre id="state-out">(none)</pre>
+
+    <h3>Metrics <span class="hint">(refresh 2s)</span></h3>
+    <table id="metrics-table"><tbody></tbody></table>
+
+    <h3>Topics</h3>
+    <ul id="topics-list"></ul>
+  </section>
+
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

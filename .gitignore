@@ -1,0 +1,48 @@
+# Go
+bin/
+*.test
+*.out
+/eventwatch
+/eventwatch-cli
+/testclient
+/server
+
+# OS / editor
+.DS_Store
+.env
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Java / Maven
+target/
+
+# Rust / Cargo
+Cargo.lock  # keep only for binaries; this repo is a workspace of libs + a server (keep server's, ignore client crate's)
+!/go.sum
+clients/rust/target/
+clients/rust/Cargo.lock
+
+# Node / Vite
+node_modules/
+dist/
+frontend/dist/
+
+# Wails
+wails-client/eventwatch-desktop/build/
+wails-client/eventwatch-desktop/eventwatch-desktop
+wails-client/eventwatch-desktop/frontend/dist/
+
+# ESP-IDF
+clients/esp-idf/example/build/
+clients/esp-idf/example/managed_components/
+clients/esp-idf/example/sdkconfig
+clients/esp-idf/example/sdkconfig.old
+clients/esp-idf/example/dependencies.lock
