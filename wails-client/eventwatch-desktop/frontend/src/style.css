@@ -95,3 +95,17 @@ table.entity-table td:last-child { text-align: right; }
 .notif-box.flash { background: #274b8f; border-color: #6ab0ff; }
 .notif-count { font-size: 34px; font-weight: 700; font-family: ui-monospace, monospace; }
 .notif-label { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+/* Cheatsheet card */
+.cheat-group { margin-bottom: 6px; }
+.cheat-group-header { width: 100%; text-align: left; background: #1c2029;
+  border: 1px solid var(--border); border-radius: 3px; padding: 5px 8px;
+  color: var(--text); cursor: pointer; font: inherit; }
+.cheat-group-header:hover { background: #232833; }
+table.cheat-table { width: 100%; font-size: 11px; border-collapse: collapse; margin-top: 4px; }
+table.cheat-table td { padding: 5px 6px; vertical-align: top; border-bottom: 1px solid #1a1e28; }
+table.cheat-table td.cheat-label { color: var(--text); min-width: 160px; }
+table.cheat-table td.cheat-payload { color: var(--muted); }
+table.cheat-table td.cheat-json { font-family: ui-monospace, monospace; color: #b0b6c8;
+  max-width: 260px; word-break: break-all; }
+table.cheat-table td:last-child { text-align: right; }

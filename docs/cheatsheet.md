@@ -3,6 +3,14 @@
 One-page reference. Bookmark. If you want narrative, see
 [`wire-protocol.md`](wire-protocol.md) and [`object-types.md`](object-types.md).
 
+> **This cheatsheet is also live in both UIs** (React + Wails) as a
+> "Cheatsheet — event types & payload examples" card. Every row has an
+> **Inject →** button that fills the Publish card's fields with the
+> exact topic/type/payload — click, review, publish. Same content, no
+> copy-paste from this doc into a form. Both UIs also expose small
+> **ⓘ** hover-hints on the Publish card's Topic / Event type / Payload
+> inputs.
+
 ## Wire — the 3 things every client does
 
 ### Publish

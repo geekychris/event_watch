@@ -2,13 +2,19 @@
 
 The React app in [`clients/react/`](../clients/react/) is a full-parity
 demo of the Wails desktop app — same four operational cards (Connect,
-Subscribe, Publish, Fields) plus two extra widgets that illustrate the
-two common ways a UI integrates with event_watch:
+Subscribe, Publish, Fields) plus:
 
-1. **Entity list** — deep integration. One subscription per rendered
-   item; each item renders its own reduced state.
-2. **Notification** — shallow / change-data-capture. Ignores payload;
-   just knows that *something* happened.
+- Two integration-pattern widgets:
+  1. **Entity list** — deep integration. One subscription per rendered
+     item; each item renders its own reduced state.
+  2. **Notification** — shallow / change-data-capture. Ignores payload;
+     just knows that *something* happened.
+- A **Cheatsheet card** — every event type + payload example from
+  [`docs/cheatsheet.md`](cheatsheet.md), each with an "Inject →" button
+  that fills the Publish card so you never need to type an event name
+  or payload by hand.
+- Small **ⓘ** hover-hints on the Publish card's Topic / Event type /
+  Payload inputs pointing you at the format rules.
 
 Both integrations run on the same [`@eventwatch/browser`](../clients/browser/)
 client library and demonstrate the two custom hooks that make React

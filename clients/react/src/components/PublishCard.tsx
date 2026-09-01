@@ -1,6 +1,7 @@
-// Publish card + scripted simulations (parity with the Wails app).
-import { useState } from 'react';
+// Publish card + scripted simulations. Reads/writes the shared publish form
+// context so the CheatsheetCard can programmatically inject examples.
 import { useClient } from '../hooks/useClient';
+import { usePublishForm } from '../hooks/usePublishForm';
 
 const SIMS: Record<string, { topic: string; steps: [string, Record<string, unknown>][] }> = {
   pr:     { topic: 'pr/octo/hello/1', steps: [
@@ -37,15 +38,13 @@ const SIMS: Record<string, { topic: string; steps: [string, Record<string, unkno
 
 export function PublishCard() {
   const { client } = useClient();
-  const [topic, setTopic] = useState('chat/general');
-  const [type, setType] = useState('msg_posted');
-  const [payload, setPayload] = useState('{"user":"alice","text":"hi"}');
+  const form = usePublishForm();
 
   const publish = async () => {
     if (!client) return alert('connect first');
     let p: unknown;
-    try { p = JSON.parse(payload || '{}'); } catch (e) { return alert('payload must be JSON: ' + (e as Error).message); }
-    try { await client.publish(topic, type, p); } catch (e) { alert('publish: ' + (e as Error).message); }
+    try { p = JSON.parse(form.payload || '{}'); } catch (e) { return alert('payload must be JSON: ' + (e as Error).message); }
+    try { await client.publish(form.topic, form.type, p); } catch (e) { alert('publish: ' + (e as Error).message); }
   };
 
   const runSim = async (kind: keyof typeof SIMS) => {
@@ -59,18 +58,21 @@ export function PublishCard() {
   };
 
   return (
-    <section className="card">
+    <section className="card" id="publish-card">
       <h2>3. Publish / simulate</h2>
-      <label>Topic
-        <input value={topic} onChange={(e) => setTopic(e.target.value)}
+      <label>
+        Topic <Help>Format: <code>&lt;type&gt;/&lt;id...&gt;</code>. Case-sensitive; lowercase prefixes only (pr/int/str/...). Segments: [A-Za-z0-9._-]+, max 512 chars.</Help>
+        <input value={form.topic} onChange={(e) => form.set({ topic: e.target.value })}
                autoCapitalize="off" autoCorrect="off" spellCheck={false} />
       </label>
-      <label>Event type
-        <input value={type} onChange={(e) => setType(e.target.value)}
+      <label>
+        Event type <Help>Reducer-recognised event name for the topic's type. e.g. <code>pr_opened</code>, <code>int_incr</code>. See the Cheatsheet card below for the full list.</Help>
+        <input value={form.type} onChange={(e) => form.set({ type: e.target.value })}
                autoCapitalize="off" autoCorrect="off" spellCheck={false} />
       </label>
-      <label>Payload JSON
-        <textarea rows={3} value={payload} onChange={(e) => setPayload(e.target.value)}
+      <label>
+        Payload JSON <Help>Object literal. Key names are exact — see the Cheatsheet for what each event type reads (e.g. <code>&#123;"delta":5&#125;</code> for int_incr, not <code>&#123;"value":5&#125;</code>).</Help>
+        <textarea rows={3} value={form.payload} onChange={(e) => form.set({ payload: e.target.value })}
                   autoCapitalize="off" autoCorrect="off" spellCheck={false} />
       </label>
       <div className="row"><button onClick={publish}>Publish</button></div>
@@ -83,5 +85,16 @@ export function PublishCard() {
         ))}
       </div>
     </section>
+  );
+}
+
+// Small inline "?" tooltip. Uses <details>/<summary> so it works without
+// any tooltip library and stays open on click for readability.
+function Help({ children }: { children: React.ReactNode }) {
+  return (
+    <details className="help">
+      <summary title="click for help">ⓘ</summary>
+      <div className="help-body">{children}</div>
+    </details>
   );
 }

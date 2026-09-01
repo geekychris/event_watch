@@ -61,3 +61,30 @@ table.entity-table { width: 100%; font-size: 11px; border-collapse: collapse; ma
 .notif-box.flash { background: #274b8f; border-color: #6ab0ff; }
 .notif-count { font-size: 40px; font-weight: 700; }
 .notif-label { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+/* Inline "?" help — a <details>/<summary> pair so no JS needed. */
+details.help { display: inline; margin-left: 4px; position: relative; }
+details.help > summary { display: inline; cursor: help; color: var(--accent); list-style: none;
+  font-size: 11px; padding: 0 3px; user-select: none; }
+details.help > summary::-webkit-details-marker { display: none; }
+details.help[open] > summary { color: #7fd; }
+details.help .help-body { display: block; position: absolute; z-index: 20;
+  background: #0e1117; border: 1px solid var(--accent); border-radius: 4px;
+  padding: 8px 10px; margin-top: 4px; max-width: 340px; font-size: 11px;
+  color: var(--text); font-weight: normal; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+details.help .help-body code { background: #171a22; padding: 1px 4px; border-radius: 2px; }
+
+/* Cheatsheet card — collapsible per-object-type groups + inject buttons. */
+.cheat-groups { margin-top: 6px; }
+.cheat-group { margin-bottom: 6px; }
+.cheat-group-header { width: 100%; text-align: left; background: #1c2029;
+  border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px;
+  color: var(--text); cursor: pointer; font: inherit; }
+.cheat-group-header:hover { background: #232833; }
+.cheat-table { width: 100%; font-size: 11px; border-collapse: collapse; margin-top: 4px; }
+.cheat-table td { padding: 5px 6px; vertical-align: top; border-bottom: 1px solid #1a1e28; }
+.cheat-table td.cheat-label { color: var(--text); min-width: 160px; }
+.cheat-table td.cheat-payload { color: var(--muted); }
+.cheat-table td.cheat-json { font-family: ui-monospace, monospace; color: #b0b6c8;
+  max-width: 260px; word-break: break-all; }
+.cheat-table td:last-child { text-align: right; }
