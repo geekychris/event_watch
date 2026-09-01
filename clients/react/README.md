@@ -45,8 +45,12 @@ to ship one bundle.
 
 ## How to demo the widgets
 
-Start the server and this app; open two browser tabs (both at
-`http://localhost:5173`); connect both to `ws://localhost:8080/ws`.
+> **Detailed testing guide** (exact event types, payload JSON for every
+> event, expected UI state after each publish, gotchas): see
+> **[`docs/demo-widgets.md`](../../docs/demo-widgets.md)**.
+
+Short version — start the server and this app; open two browser tabs (both
+at `http://localhost:5173`); connect both to `ws://localhost:8080/ws`.
 
 ### Widget 1 — Entity list (deep integration)
 
