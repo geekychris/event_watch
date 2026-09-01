@@ -35,6 +35,11 @@ node_modules/
 dist/
 frontend/dist/
 
+# TypeScript build output — the React app is source-only in the repo;
+# `.js` and `.tsbuildinfo` are outputs of `tsc -b` and get rebuilt.
+clients/react/src/**/*.js
+clients/react/**/*.tsbuildinfo
+
 # Wails
 wails-client/eventwatch-desktop/build/
 wails-client/eventwatch-desktop/eventwatch-desktop
