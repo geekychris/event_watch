@@ -45,6 +45,12 @@ spec:
               cpu: "50m"
               memory: "64Mi"
             limits:
+              # NOTE: no CPU limit on purpose. Redis is single-threaded and
+              # CFS CPU throttling causes visible tail-latency spikes even
+              # when the average is well under the limit. Set requests to
+              # right-size scheduling; leave the ceiling off so bursts run
+              # at line rate. Bump the request (not the limit) if you need
+              # a bigger reservation.
               memory: "512Mi"
           readinessProbe:
             exec:
