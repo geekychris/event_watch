@@ -20,7 +20,8 @@ that thing so every observer sees a consistent view.**
 4. **[object-types.md](object-types.md)** — the 8 built-in object types with lifecycle diagrams
 5. **[build.md](build.md)** — install / run / test / configure
 6. **[clients.md](clients.md)** — usage guides for Go, Python, Java, Rust, ESP-IDF, Arduino
-7. **[extending.md](extending.md)** — add your own reducer or webhook plugin
+7. **[kubernetes.md](kubernetes.md)** — container image + Kustomize manifests (server + Redis + ingress + Prometheus)
+8. **[extending.md](extending.md)** — add your own reducer or webhook plugin
 
 ## What is it, really?
 
