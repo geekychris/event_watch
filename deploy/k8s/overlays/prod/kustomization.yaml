@@ -1,0 +1,50 @@
+# Prod overlay stub. Copy this to deploy/k8s/overlays/<your-env>/ and adjust.
+# By default this pulls in the ingress + ServiceMonitor extras; comment them
+# out if you don't have an ingress controller or the Prometheus operator.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: event-watch
+
+resources:
+  - ../../base
+  - ../../extras
+
+images:
+  - name: ghcr.io/geekychris/event_watch
+    newTag: v0.1.0
+
+replicas:
+  - name: event-watch
+    count: 1     # keep at 1 until the multi-node Pub/Sub bridge is wired
+
+patches:
+  # Bump server resource limits for prod scale.
+  - target:
+      kind: Deployment
+      name: event-watch
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "2000m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "200m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "256Mi"
+
+  # Bump Redis PVC size + resources.
+  - target:
+      kind: StatefulSet
+      name: event-watch-redis
+    patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: "10Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "2Gi"

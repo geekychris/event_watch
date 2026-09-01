@@ -1,0 +1,23 @@
+# kube-prometheus-stack (Prometheus Operator) ServiceMonitor.
+# Requires the Prometheus Operator CRDs; skip if you're using a plain
+# Prometheus that scrapes by pod/service annotations (those are set on
+# the base server-service.yaml).
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: event-watch
+  labels:
+    app.kubernetes.io/name: event-watch
+    # Some kube-prometheus-stack installs require a specific `release` label
+    # to be picked up by the default Prometheus instance:
+    # release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: event-watch
+      app.kubernetes.io/component: server
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s

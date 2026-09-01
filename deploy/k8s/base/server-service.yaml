@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: event-watch
+  labels:
+    app.kubernetes.io/name: event-watch
+    app.kubernetes.io/component: server
+  annotations:
+    # Prometheus scrape hint for a simple prom setup that watches pods/services
+    # by annotation (kube-prometheus-stack ServiceMonitor is preferred — see
+    # deploy/k8s/extras/servicemonitor.yaml).
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: event-watch
+    app.kubernetes.io/component: server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

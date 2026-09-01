@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-watch
+  labels:
+    app.kubernetes.io/name: event-watch
+    app.kubernetes.io/component: server
+spec:
+  # NOTE: replicas is 1 on purpose. The current fan-out is in-process
+  # only — a subscriber connected to pod A will not see events published
+  # to pod B. Multi-pod fan-out requires the Redis Pub/Sub bridge on the
+  # Store interface (Notify/Watch already exist, no code calls them yet).
+  # Until that's wired, keep replicas=1 to avoid silently splitting the
+  # subscription graph across pods.
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: event-watch
+      app.kubernetes.io/component: server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: event-watch
+        app.kubernetes.io/component: server
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: server
+          # Overridden by kustomize `images:` — this is just a sane default.
+          image: ghcr.io/geekychris/event_watch:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: event-watch-config
+            - secretRef:
+                name: event-watch-secret
+                optional: true      # secret is only needed when EW_AUTH=bearer
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /admin/metrics.json
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /admin/metrics.json
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

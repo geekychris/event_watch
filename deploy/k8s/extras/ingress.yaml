@@ -1,0 +1,36 @@
+# Example NGINX Ingress with WebSocket-friendly annotations.
+# Adjust host, ingressClassName, and TLS to match your cluster.
+#
+# Included by overlays/prod/kustomization.yaml. Comment out or delete if you
+# don't use an ingress controller.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: event-watch
+  labels:
+    app.kubernetes.io/name: event-watch
+  annotations:
+    # NGINX-Ingress WebSocket + long-poll support.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/proxy-set-headers: "Upgrade $http_upgrade,Connection upgrade"
+    # If you're using cert-manager for TLS, uncomment:
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx     # change to your class (traefik, gce, etc.)
+  tls:
+    - hosts:
+        - event-watch.example.com     # ← change me
+      secretName: event-watch-tls     # TLS cert Secret (or cert-manager will create it)
+  rules:
+    - host: event-watch.example.com    # ← change me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: event-watch
+                port:
+                  number: 80

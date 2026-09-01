@@ -1,0 +1,25 @@
+# Base overlay. Not intended to be applied directly — use an overlay
+# (deploy/k8s/overlays/dev or /overlays/prod) so you can pin the image tag
+# and set environment-specific config.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: event-watch
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.example.yaml
+  - redis-service.yaml
+  - redis-statefulset.yaml
+  - server-service.yaml
+  - server-deployment.yaml
+
+labels:
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/part-of: event-watch
+
+images:
+  - name: ghcr.io/geekychris/event_watch
+    newTag: latest

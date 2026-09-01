@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: event-watch
+  labels:
+    app.kubernetes.io/name: event-watch
+    app.kubernetes.io/part-of: event-watch

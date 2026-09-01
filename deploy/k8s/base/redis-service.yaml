@@ -1,0 +1,18 @@
+# Headless service so the StatefulSet gets stable per-pod DNS
+# (event-watch-redis-0.event-watch-redis.event-watch.svc.cluster.local),
+# AND a regular ClusterIP alias for the server to point at.
+apiVersion: v1
+kind: Service
+metadata:
+  name: event-watch-redis
+  labels:
+    app.kubernetes.io/name: event-watch-redis
+    app.kubernetes.io/component: redis
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: event-watch-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379

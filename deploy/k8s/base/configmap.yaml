@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-watch-config
+  labels:
+    app.kubernetes.io/name: event-watch
+    app.kubernetes.io/component: server
+data:
+  # Every server setting has both a flag and an EW_* env var; the ConfigMap
+  # feeds env vars, then the Deployment turns them into --flags on the
+  # ENTRYPOINT via command-line args. Keeping both routes so operators can
+  # override with a flag on a one-off pod for debugging.
+  EW_ADDR: ":8080"
+  EW_STORE: "redis"
+  EW_REDIS_ADDR: "event-watch-redis:6379"
+  EW_REDIS_DB: "0"
+  EW_DEFAULT_TTL: "168h"
+  EW_ARCHIVE_INTERVAL: "5m"
+  # Auth is off by default. To enable, set EW_AUTH=bearer and populate the
+  # EW_AUTH_TOKEN key in the event-watch-secret Secret.
+  EW_AUTH: ""

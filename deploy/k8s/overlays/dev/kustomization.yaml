@@ -1,0 +1,30 @@
+# Dev overlay: 1-replica server, ephemeral Redis (emptyDir), no ingress,
+# minimal resources. Suitable for kind / minikube / docker-desktop k8s.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: event-watch
+
+resources:
+  - ../../base
+
+# Point at your local image (built via `docker build -f deploy/Dockerfile -t event_watch:dev .`).
+# On kind: `kind load docker-image event_watch:dev`.
+images:
+  - name: ghcr.io/geekychris/event_watch
+    newName: event_watch
+    newTag: dev
+
+patches:
+  # Replace the Redis PVC template with an emptyDir for fast dev iteration.
+  - target:
+      kind: StatefulSet
+      name: event-watch-redis
+    patch: |-
+      - op: remove
+        path: /spec/volumeClaimTemplates
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: data
+            emptyDir: {}
