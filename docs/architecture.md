@@ -8,7 +8,7 @@ flowchart TB
         WS["ws.go<br/>WebSocket handler<br/>(subscribe/publish/get_state/ping)"]
         POLL["poll.go<br/>short + long-poll fallback"]
         PUB["publish.go<br/>POST /publish<br/>POST /webhook/{plugin}"]
-        FLD["field.go<br/>POST /field/set|incr|decr|delete|..."]
+        FLD["field.go<br/>POST /field/set, incr, decr, delete, ..."]
         ADM["admin.go<br/>state, events, topics, metrics.json"]
     end
 
@@ -55,7 +55,7 @@ flowchart TB
     AI -.-> BEA
     Transport -->|counters/histograms| MET
     ARC -->|DeleteTopic| SI
-    Transport -->|/webhook/{plugin}| WH
+    Transport -->|webhook plugin| WH
     WH -->|Transform → Events| BR
 ```
 
@@ -76,17 +76,17 @@ sequenceDiagram
     participant HB as Hub
     participant SUB as Subscribers
 
-    P->>BR: Publish(event)
+    P->>BR: Publish event
     Note right of BR: ingest.Lock()
-    BR->>ST: Append(event) → seq
-    BR->>ST: GetState(topic) → prev
-    BR->>RD: Apply(prev, event) → next
+    BR->>ST: Append -> seq
+    BR->>ST: GetState -> prev
+    BR->>RD: Apply(prev, event) -> next
     BR->>ST: SetState(topic, next)
     BR->>ST: UpsertMeta(object_type, TTL)
-    Note over BR: attach `state = next` to a copy of the event
-    BR->>HB: Publish(&fanout)
+    Note over BR: attach state=next to a copy of the event
+    BR->>HB: Publish fanout copy
     Note right of BR: ingest.Unlock()
-    HB-->>SUB: event (with state) on each sub channel
+    HB-->>SUB: event with state, on each sub channel
 ```
 
 Design choices worth calling out:
@@ -100,13 +100,13 @@ Design choices worth calling out:
 ```mermaid
 flowchart LR
     IN[Broker.Publish] --> H[Hub.Publish]
-    H --> S1[sub1.C<br/>cap 256]
-    H --> S2[sub2.C<br/>cap 256]
-    H --> S3[sub3.C<br/>cap 256, FULL]
+    H --> S1["sub1.C<br/>cap 256"]
+    H --> S2["sub2.C<br/>cap 256"]
+    H --> S3["sub3.C<br/>cap 256, FULL"]
     S1 --> W1[WS writer 1]
     S2 --> W2[WS writer 2]
-    S3 -.->|drop-and-mark| MET[dropped_slow_consumer_total++]
-    S3 -.->|lag counter++| L3[send<br/>{type:'lagging'}<br/>to client]
+    S3 -.->|drop-and-mark| MET["dropped_slow_consumer_total ++"]
+    S3 -.->|lag counter ++| L3["send 'lagging' frame<br/>to client"]
 ```
 
 - Buffered per-subscriber channels (default 256).
@@ -155,21 +155,21 @@ last handle closes does the client send `unsubscribe` upstream.
 ```mermaid
 flowchart LR
     subgraph App["Application"]
-        A[widget A<br/>Subscribe → handle1]
-        B[widget B<br/>Subscribe → handle2]
-        C[widget C<br/>Subscribe → handle3]
+        A["widget A<br/>Subscribe -> handle1"]
+        B["widget B<br/>Subscribe -> handle2"]
+        C["widget C<br/>Subscribe -> handle3"]
     end
     subgraph Client["client library"]
-        R{topic table<br/>pr/x → [cb1, cb2, cb3]}
+        R["topic table<br/>pr/x -> cb1, cb2, cb3"]
     end
     A --> R
     B --> R
     C --> R
-    R -->|"one WS subscribe"| SRV[server]
-    SRV -->|"one event stream"| R
-    R -->|"cb1(event)"| A
-    R -->|"cb2(event)"| B
-    R -->|"cb3(event)"| C
+    R -->|one WS subscribe| SRV[server]
+    SRV -->|one event stream| R
+    R -->|cb1 event| A
+    R -->|cb2 event| B
+    R -->|cb3 event| C
 ```
 
 When `handle2.Close()` runs, the client removes `cb2`; the WS subscription
@@ -215,15 +215,15 @@ event_watch/
 ```mermaid
 flowchart LR
     subgraph Node["one event_watch process"]
-        S[HTTP + WS server<br/>:8080]
+        S["HTTP + WS server<br/>:8080"]
         HUB[in-process hub]
         BR[broker]
         MEM["memory or redis store"]
     end
-    R[(Redis, optional)]
+    R[("Redis (optional)")]
     C[clients]
     C <-->|WebSocket| S
-    C -->|POST /publish, POST /webhook/*| S
+    C -->|POST publish or webhook| S
     MEM -.->|persist| R
 ```
 
@@ -238,14 +238,14 @@ flowchart LR
     subgraph Cluster["N event_watch nodes behind LB"]
         N1[node 1] --- N2[node 2] --- N3[node 3]
     end
-    R[(Redis Streams + Pub/Sub)]
+    R[("Redis Streams + PubSub")]
     LB[load balancer]
     C[clients]
     C <-->|WebSocket sticky| LB
     LB --> N1
     LB --> N2
     LB --> N3
-    N1 -.->|Notify(topic, event)| R
+    N1 -.->|Notify| R
     N2 -.->|Watch| R
     N3 -.->|Watch| R
 ```
