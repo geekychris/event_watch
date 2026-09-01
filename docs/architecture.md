@@ -137,6 +137,117 @@ forwards live events from `sub.C` while dropping any with
 Everything else — reconnect, ack, get_state, lagging frames — is a small
 variation on those two.
 
+## Technology choices — what's off-the-shelf and why
+
+Everything else in this doc talks about what we built. This section is
+strictly *what we didn't build* — every third-party piece the system
+depends on, and why it's there instead of something else.
+
+### Runtime
+
+| Piece | Version | Where it's used | Why it (and not X) |
+|---|---|---|---|
+| **Go** | 1.25+ | server, Go client, CLI harness | Goroutine-per-subscriber fan-out is a natural fit; `net/http` + `gorilla/websocket` are mature; static-linked single-binary deploy has no runtime deps. |
+| **Docker** | any recent | *dev only*, to run Redis locally via `docker-compose.yml` | Convenience. The server binary itself is **not** containerised — we ship a plain Go binary. Bring your own container if you want one; it's not on the critical path. |
+| **Xcode command-line tools** | any | macOS build only | Needed by cgo for the Redis client's zero-copy paths. Linux builds don't need it. |
+
+### Storage
+
+| Piece | Version | Where it's used | Why it (and not X) |
+|---|---|---|---|
+| **Redis** | 7.x (via `redis:7-alpine`) | optional prod backend | Redis Streams give append-only ordered logs with cheap XADD/XRANGE/XTRIM (no schema migrations, no per-topic table proliferation). `INCR` is atomic without transactions — perfect for assigning per-topic seq. Native Pub/Sub gives us the multi-node fan-out path we can flip on later without redesign. |
+| **`go-redis/v9`** | latest | Redis client library in `internal/store/redis/` | Only mainstream Redis client for Go that supports Streams + TxPipeline ergonomically. |
+| **In-memory (our code)** | — | default backend, all tests | Same `Store` interface as Redis. Zero deps. Used for `go test` so CI never needs Docker; also usable in prod if durability isn't required. |
+| **~~SQL~~** | — | *deliberately not used* | No natural "append + assign seq atomically" without transactions; per-topic streams would fight against SQL's row-based model; time-series/append workloads are Redis's sweet spot. If you have a hard SQL requirement, the `Store` interface is narrow (~12 methods) — a Postgres impl would be ~300 LOC. |
+
+### Wire
+
+| Piece | Version | Where it's used | Why |
+|---|---|---|---|
+| **WebSocket (RFC 6455)** | — | primary transport for all clients | Bidirectional, browser-native, supported by every language/platform we target down to $5 ESP8266 boards. HTTP/2 SSE was considered but is one-way and awkward for MCU. |
+| **`gorilla/websocket`** | v1.5.x | server WS handler | Battle-tested, low-allocation, per-connection ping/pong control. `nhooyr/websocket` was a candidate but has fewer knobs for slow-consumer handling. |
+| **JSON** | via stdlib `encoding/json` / equivalent per language | every wire frame | Human-inspectable in the browser devtools and every language has it in the stdlib. Not the fastest — protobuf would win here — but it's the right trade for a system where debuggability + client-portability matter more than raw throughput. |
+
+### Metrics & UI
+
+| Piece | Version | Where it's used | Why |
+|---|---|---|---|
+| **`prometheus/client_golang`** | latest | `/metrics` endpoint | De-facto standard. Any Prometheus/Grafana/VictoriaMetrics stack scrapes it. |
+| **htmx UI (our HTML/CSS/JS)** | — | embedded UI at `/` | Vanilla JS, no framework, no build step. Served by `go:embed` — no filesystem access at runtime. Loading htmx as a dep was considered and rejected: raw JS was smaller than the wrapper cost for this UI. |
+| **Wails 2** | v2.15.x | optional native desktop app | Wraps the same Go client library in a Chromium webview; `wails generate module` auto-produces JS bindings for the Go methods. Alternative was Fyne (pure Go UI) — rejected because we already had an htmx UI worth reusing. |
+
+### Client-library third-party deps
+
+| Language | Deps |
+|---|---|
+| Go | `gorilla/websocket` |
+| Python | `websockets` (asyncio) |
+| Java | Jackson for JSON. **WebSocket is JDK-native** (`java.net.http.WebSocket`, JDK 11+) — no ws lib. |
+| Rust | `tokio-tungstenite`, `serde_json`, `tokio` |
+| ESP-IDF | `esp_websocket_client` (Espressif official), `cJSON` (bundled) |
+| Arduino | `Links2004/arduinoWebSockets`, `ArduinoJson` |
+
+### Auth
+
+| Piece | Where it's used | Why |
+|---|---|---|
+| **Static bearer token (our code)** | optional, when `--auth=bearer` | Simplest thing that works. `Authenticator` interface lets you slot in JWT/OIDC/mTLS without touching transport code. Kept out of v1 to avoid an identity-provider dependency in the critical path. |
+| **HMAC-SHA256 (stdlib `crypto/hmac`)** | GitHub webhook signature verification | Matches GitHub's `X-Hub-Signature-256` scheme exactly. |
+
+### Testing & dev-only
+
+| Piece | Where it's used |
+|---|---|
+| **stdlib `go test`** + race detector | every package |
+| **JUnit 5** | Java client tests |
+| **pytest** + `pytest-asyncio` | Python client tests |
+| **built-in `cargo test`** | Rust client tests |
+| **`mermaid-cli`** (`@mermaid-js/mermaid-cli`) | dev tool for validating docs' mermaid blocks parse |
+
+## Process boundaries + external services
+
+Everything above lives in exactly two places: our Go binary, and (optionally)
+a Redis process. Everything else is on the client side of a WebSocket / HTTP
+boundary.
+
+```mermaid
+flowchart TB
+    subgraph Anywhere["Any machine, any language"]
+        BROWSER["Browser<br/>htmx UI (WebSocket)"]
+        DESKTOP["Wails desktop app<br/>Chromium webview + Go"]
+        SDK["Go / Python / Java / Rust<br/>full-parity clients"]
+        MCU["ESP32 / ESP8266<br/>MCU clients"]
+        SVC["Backend services<br/>HTTP publish"]
+        HOOK["Webhook providers<br/>GitHub, GitLab, ..."]
+    end
+
+    subgraph Host["Host running the server"]
+        subgraph Bin["event_watch binary (single static Go binary — no runtime deps)"]
+            SRV["HTTP + WebSocket<br/>on one port (default :8080)"]
+            LOGIC["Broker + Hub + Reducers<br/>Store interface + Auth"]
+            SIDE["Metrics + Archiver + Webhook plugins"]
+        end
+        REDIS[("Redis 7 — OPTIONAL<br/>Streams + Hashes + Sets<br/>docker: redis:7-alpine")]
+    end
+
+    BROWSER <-->|WebSocket + JSON| SRV
+    DESKTOP <-->|WebSocket + JSON| SRV
+    SDK     <-->|WebSocket + JSON| SRV
+    MCU     <-->|WebSocket + JSON| SRV
+    SVC     -->|HTTP + JSON| SRV
+    HOOK    -->|HTTP + provider-signed JSON| SRV
+    SRV --> LOGIC
+    LOGIC --> SIDE
+    LOGIC -.->|"Redis protocol<br/>only when --store=redis"| REDIS
+```
+
+Concretely:
+
+- **Our code is the Go binary.** Everything above is a single OS process. No sidecars, no message broker, no service mesh, no queue.
+- **Redis is the only external service** — and it's **optional**. Run with `--store=memory` and you have zero external deps. Run with `--store=redis` and you get durability + restart-safety.
+- **Docker is a dev convenience**, not a deployment. `docker-compose.yml` exists to give you a one-command Redis for local testing. In production you run whichever Redis (self-hosted, ElastiCache, Upstash, ...) you already have.
+- **Clients are anywhere.** Same wire protocol; browser, laptop app, backend service, or $5 microcontroller all talk to the same port.
+
 ## Core types
 
 - **`Event`** — `{id, topic, type, seq, occurred_at, actor, payload, state?}`.
@@ -156,10 +267,10 @@ variation on those two.
 
 ---
 
-## Component map
+## Component map (inside the Go binary)
 
-With the principle and structure above in mind, here's the same picture as
-boxes and arrows.
+Zooming into the binary from the previous diagram. Every box below is one
+of our Go packages; nothing here is a separate process.
 
 ```mermaid
 flowchart TB
