@@ -6,8 +6,11 @@ receive events + a server-maintained "deep state" snapshot produced by
 per-object-type reducers.
 
 **📖 Full docs in [`docs/`](docs/)** — overview, architecture with mermaid
-diagrams, wire protocol, object types, build guide, client usage for six
+diagrams, wire protocol, object types, build guide, client usage for seven
 languages, and how to extend.
+
+**Quick reference for event types + payload formats (including math ops):**
+[`docs/cheatsheet.md`](docs/cheatsheet.md).
 
 ## Quick start
 
