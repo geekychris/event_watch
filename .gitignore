@@ -45,6 +45,14 @@ wails-client/eventwatch-desktop/build/
 wails-client/eventwatch-desktop/eventwatch-desktop
 wails-client/eventwatch-desktop/frontend/dist/
 
+# CDK
+deploy/aws/cdk.out/
+deploy/aws/*.d.ts
+deploy/aws/**/*.d.ts
+deploy/aws/bin/*.js
+deploy/aws/lib/*.js
+deploy/aws/*.js.map
+
 # ESP-IDF
 clients/esp-idf/example/build/
 clients/esp-idf/example/managed_components/

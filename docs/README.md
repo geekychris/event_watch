@@ -24,7 +24,8 @@ that thing so every observer sees a consistent view.**
 8. **[react-app.md](react-app.md)** — React + TypeScript demo app; deep vs shallow (CDC) UI integration patterns
 9. **[demo-widgets.md](demo-widgets.md)** — hands-on: exact event types + payloads to drive both demo widgets, copy-paste demo scripts
 10. **[kubernetes.md](kubernetes.md)** — container image + Kustomize manifests (server + Redis + ingress + Prometheus)
-11. **[extending.md](extending.md)** — add your own reducer or webhook plugin
+11. **[aws.md](aws.md)** — AWS deployment via CDK (Fargate + ALB + ElastiCache Redis; dev + prod stacks)
+12. **[extending.md](extending.md)** — add your own reducer or webhook plugin
 
 ## What is it, really?
 

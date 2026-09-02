@@ -1,0 +1,5 @@
+{
+  "_comment": "Placeholder context so `cdk synth --no-lookups` works without AWS credentials. When you `cdk deploy` for real, CDK ignores these placeholders and pulls the actual AZs / hosted-zone info for your account. Committed on purpose — don't delete unless you understand that offline synth (and CI schema checks) will break without it.",
+  "availability-zones:account=641818737492:region=us-east-1":  ["us-east-1a", "us-east-1b"],
+  "availability-zones:account=000000000000:region=us-east-1":  ["us-east-1a", "us-east-1b"]
+}

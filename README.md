@@ -33,7 +33,7 @@ make run-redis
 - `clients/`        — Python / Java / Rust / ESP-IDF / Arduino client libraries (see [`clients/README.md`](clients/README.md))
 - `web/`            — htmx UI (embedded)
 - `wails-client/`   — Wails desktop app (mirror of the htmx UI, imports `client/`)
-- `deploy/`         — Dockerfile + Kustomize manifests for Kubernetes (see [`deploy/k8s/README.md`](deploy/k8s/README.md))
+- `deploy/`         — Dockerfile + Kustomize manifests for Kubernetes ([`deploy/k8s/README.md`](deploy/k8s/README.md)) + CDK stacks for AWS ([`deploy/aws/README.md`](deploy/aws/README.md))
 - `docs/`           — the full documentation set
 
 ## Object types shipped in v1

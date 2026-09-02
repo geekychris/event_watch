@@ -1,0 +1,7 @@
+node_modules/
+cdk.out/
+*.d.ts
+*.js
+!bin/**/*.js.example
+.cdk.staging/
+.aws-sam/

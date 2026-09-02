@@ -5,6 +5,7 @@ docs/
 clients/
 wails-client/
 deploy/k8s/
+deploy/aws/
 **/node_modules/
 **/target/
 **/build/
