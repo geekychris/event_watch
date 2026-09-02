@@ -1,5 +1,6 @@
 # Go
-bin/
+/bin/                    # repo-root bin/ only, not e.g. deploy/aws/bin/
+!deploy/aws/bin/         # belt-and-braces: CDK entry lives here
 *.test
 *.out
 /eventwatch
