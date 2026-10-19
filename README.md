@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Event Watch logo" width="180">
+</p>
+
 # event_watch
 
 Low-latency pub/sub event notification service. Backend services publish
