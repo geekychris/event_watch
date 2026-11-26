@@ -5,7 +5,7 @@
 #
 # Result: distroless static image, non-root uid 65532, ~15 MB.
 
-ARG GO_VERSION=1.25
+ARG GO_VERSION=1.26
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS build
 ARG TARGETOS
 ARG TARGETARCH
